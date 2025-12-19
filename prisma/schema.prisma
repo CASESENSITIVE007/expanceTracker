@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  expenses  Expense[] @relation("PaidBy")
+  splits    ExpenseSplit[]
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  name      String
+  expenses  Expense[]
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  splitType   String   // EQUAL, EXACT, PERCENTAGE
+  paidBy      User     @relation("PaidBy", fields: [paidById], references: [id])
+  paidById    String
+  group       Group    @relation(fields: [groupId], references: [id])
+  groupId     String
+  splits      ExpenseSplit[]
+  createdAt   DateTime @default(now())
+}
+
+model ExpenseSplit {
+  id        String   @id @default(cuid())
+  expense   Expense  @relation(fields: [expenseId], references: [id])
+  expenseId String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  amount    Float    
+}

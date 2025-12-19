@@ -16,14 +16,33 @@ model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
+  password  String   // hashed password
   expenses  Expense[] @relation("PaidBy")
   splits    ExpenseSplit[]
+  groups    GroupMember[]
+  createdGroups Group[] @relation("GroupCreator")
+  createdAt DateTime @default(now())
 }
 
 model Group {
   id        String   @id @default(cuid())
   name      String
+  createdById String
+  createdBy User    @relation("GroupCreator", fields: [createdById], references: [id])
+  members   GroupMember[]
   expenses  Expense[]
+  createdAt DateTime @default(now())
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, userId])
 }
 
 model Expense {
@@ -33,7 +52,7 @@ model Expense {
   splitType   String   // EQUAL, EXACT, PERCENTAGE
   paidBy      User     @relation("PaidBy", fields: [paidById], references: [id])
   paidById    String
-  group       Group    @relation(fields: [groupId], references: [id])
+  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId     String
   splits      ExpenseSplit[]
   createdAt   DateTime @default(now())

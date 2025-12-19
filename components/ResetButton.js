@@ -1,20 +1,49 @@
 'use client';
 
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { clearAllExpenses } from "../app/actions";
 
 export default function ResetButton() {
-  return (
-    <form action={async () => {
-      if (confirm("Reset all expense data? Users and Groups will be kept.")) {
+  const [loading, setLoading] = useState(false);
+
+  const handleReset = async () => {
+    if (confirm("🚨 Reset all expense data? Users and Groups will be kept.")) {
+      setLoading(true);
+      try {
         await clearAllExpenses();
+      } finally {
+        setLoading(false);
       }
-    }}>
-      <button 
+    }
+  };
+
+  return (
+    <form action={handleReset}>
+      <motion.button
         type="submit"
-        className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg border border-red-200 text-sm font-bold transition-all shadow-sm"
+        disabled={loading}
+        whileHover={!loading ? { scale: 1.05 } : {}}
+        whileTap={!loading ? { scale: 0.95 } : {}}
+        className={`px-6 py-3 rounded-lg border-2 font-black transition-all shadow-lg flex items-center gap-2 ${
+          loading
+            ? 'bg-gray-300 text-gray-600 border-gray-400 cursor-wait'
+            : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-red-600'
+        }`}
       >
-        🗑️ Clear Database
-      </button>
+        {loading ? (
+          <>
+            <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
+              ⏳
+            </motion.span>
+            Clearing...
+          </>
+        ) : (
+          <>
+            🗑️ Clear Database
+          </>
+        )}
+      </motion.button>
     </form>
   );
 }

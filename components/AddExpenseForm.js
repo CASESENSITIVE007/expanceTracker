@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { addExpense } from '../app/actions';
 
 export default function AddExpenseForm({ users, groupId }) {
@@ -7,163 +8,270 @@ export default function AddExpenseForm({ users, groupId }) {
   const [amount, setAmount] = useState(0);
   const [type, setType] = useState('EQUAL');
   const [shares, setShares] = useState({});
-const [paidBy, setPaidBy] = useState(users[0]?.id || "");
-const currentTotal = Object.values(shares).reduce((a, b) => a + b, 0);
-const remaining = type === 'PERCENTAGE' ? 100 - currentTotal : amount - currentTotal;
+  const [paidBy, setPaidBy] = useState(users[0]?.id || "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const currentTotal = Object.values(shares).reduce((a, b) => a + b, 0);
+  const remaining = type === 'PERCENTAGE' ? 100 - currentTotal : amount - currentTotal;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    //logic of shares array
-    const sharesArray = users.map(u => ({ userId: u.id, value: shares[u.id] || 0 }));
-    
-    await addExpense({ 
-      description: desc, 
-      totalAmount: amount, 
-      paidById: paidBy, 
-      groupId, 
-      splitType: type, 
-      shares: sharesArray
-     });
-    alert("Expense Added!");
+    try {
+      //logic of shares array
+      const sharesArray = users.map(u => ({ userId: u.id, value: shares[u.id] || 0 }));
+      
+      await addExpense({ 
+        description: desc, 
+        totalAmount: amount, 
+        paidById: paidBy, 
+        groupId, 
+        splitType: type, 
+        shares: sharesArray
+      });
+
+      // Reset form
+      setDesc('');
+      setAmount(0);
+      setType('EQUAL');
+      setShares({});
+      setPaidBy(users[0]?.id || "");
+
+      // Show success feedback
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
+    } catch (err) {
+      setError("Failed to add expense. Please try again.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
- <form onSubmit={handleSubmit} className="p-4 bg-white rounded shadow space-y-4 text-black">
-      <h2 className="text-lg font-bold">Add New Bill</h2>
+    <motion.form
+      onSubmit={handleSubmit}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="p-6 bg-gray-900 rounded-2xl shadow-xl border-2 border-blue-500 space-y-4 text-gray-100"
+    >
+      <motion.h2
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 }}
+        className="text-2xl font-black text-blue-400 mb-4"
+      >
+        Add New Expense
+      </motion.h2>
+
+      {/* Error Message */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 bg-red-100 border-2 border-red-300 text-red-700 rounded-lg font-bold text-center"
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Description Input */}
-      <input 
-        type="text" 
-        placeholder="What was this for?" 
-        onChange={e => setDesc(e.target.value)} 
-        className="w-full border p-2 rounded" 
-        required
-      />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15 }}
+      >
+        <label className="text-sm font-bold text-gray-300 mb-2 block">What was this for?</label>
+        <motion.input
+          type="text"
+          placeholder="e.g., Dinner, Movie tickets..."
+          value={desc}
+          onChange={e => setDesc(e.target.value)}
+          whileFocus={{ scale: 1.02 }}
+          className="w-full border-2 border-blue-600 p-3 rounded-lg text-gray-100 placeholder-gray-400 bg-gray-800 focus:border-blue-400 focus:outline-none transition-all"
+          required
+        />
+      </motion.div>
 
       {/* Amount Input */}
-      <input 
-        type="number" 
-        placeholder="Total Amount" 
-        onChange={e => setAmount(Number(e.target.value))} 
-        className="w-full border p-2 rounded" 
-        required
-      />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <label className="text-sm font-bold text-gray-300 mb-2 block">Total Amount (₹)</label>
+        <motion.input
+          type="number"
+          placeholder="0.00"
+          value={amount || ''}
+          onChange={e => setAmount(Number(e.target.value))}
+          whileFocus={{ scale: 1.02 }}
+          className="w-full border-2 border-blue-600 p-3 rounded-lg text-gray-100 placeholder-gray-400 bg-gray-800 focus:border-blue-400 focus:outline-none transition-all"
+          required
+        />
+      </motion.div>
 
-      {/* NEW: Paid By Selection */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-gray-600">Who Paid?</label>
-        <select 
+      {/* Paid By Selection */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.25 }}
+        className="space-y-1"
+      >
+        <label className="text-sm font-bold text-gray-300 mb-2 block">Who Paid?</label>
+        <motion.select
           value={paidBy}
-          onChange={e => setPaidBy(e.target.value)} 
-          className="w-full border p-2 rounded bg-gray-50"
+          onChange={e => setPaidBy(e.target.value)}
+          whileFocus={{ scale: 1.02 }}
+          className="w-full border-2 border-blue-200 p-3 rounded-lg bg-white text-gray-900 focus:border-blue-500 focus:outline-none transition-all cursor-pointer"
         >
           {users.map(u => (
             <option key={u.id} value={u.id}>
               {u.name}
             </option>
           ))}
-        </select>
-      </div>
+        </motion.select>
+      </motion.div>
 
       {/* Split Type Selection */}
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-gray-600">Split Method</label>
-        <select onChange={e => setType(e.target.value)} className="w-full border p-2 rounded bg-gray-50">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="space-y-1"
+      >
+        <label className="text-sm font-bold text-gray-300 mb-2 block">Split Method</label>
+        <motion.select
+          value={type}
+          onChange={e => setType(e.target.value)}
+          whileFocus={{ scale: 1.02 }}
+          className="w-full border-2 border-blue-200 p-3 rounded-lg bg-white text-gray-900 focus:border-blue-500 focus:outline-none transition-all cursor-pointer"
+        >
           <option value="EQUAL">Split Equally</option>
           <option value="EXACT">Exact Amounts</option>
           <option value="PERCENTAGE">Percentage Split</option>
-        </select>
-      </div>
+        </motion.select>
+      </motion.div>
 
       {/* Dynamic Inputs for Exact/Percentage */}
-    {type !== 'EQUAL' && (
-  <div className="border-t pt-2 space-y-2">
-    <p className="text-xs text-gray-500 italic">
-      Enter {type === 'PERCENTAGE' ? 'percent' : 'amount'} for each:
-    </p>
-    
-    {users.map(u => (
-      <div key={u.id} className="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100">
-        <span className="text-black font-medium">{u.name}</span>
-        <div className="flex items-center gap-1">
-          <input 
-            type="number" 
-            value={shares[u.id] || ''} 
-            onChange={e => {
-              const val = e.target.value === '' ? 0 : Number(e.target.value);
-              setShares({ ...shares, [u.id]: val });
-            }} 
-            className="border p-1 w-24 text-right rounded text-black outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="0"
-          />
-          <span className="text-gray-500 font-bold w-4">
-            {type === 'PERCENTAGE' ? '%' : '₹'}
-          </span>
-        </div>
-      </div>
-    ))}
+      <AnimatePresence>
+        {type !== 'EQUAL' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="border-t-2 border-blue-200 pt-4 space-y-3"
+          >
+            <p className="text-xs font-bold text-gray-600 italic">
+              Enter {type === 'PERCENTAGE' ? 'percent' : 'amount'} for each person:
+            </p>
 
-    {/* --- NEW VALIDATION MESSAGES --- */}
-    <div className={`mt-3 p-3 rounded-lg border transition-all duration-300 ${
-      remaining === 0 
-        ? 'bg-green-50 border-green-200 text-green-700' 
-        : remaining < 0 
-          ? 'bg-orange-100 border-orange-300 text-orange-700 animate-pulse' 
-          : 'bg-blue-50 border-blue-200 text-blue-700'
-    }`}>
-      <p className="text-sm font-bold text-center">
-        {/* Case 1: Perfect Match */}
-        {remaining === 0 && (
-          <span>Great! The total matches 100% exactly ✅</span>
+            {users.map((u, index) => (
+              <motion.div
+                key={u.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="flex justify-between items-center bg-gray-800 p-3 rounded-lg border-2 border-blue-600 hover:border-blue-400 transition"
+              >
+                <span className="text-gray-200 font-bold">{u.name}</span>
+                <div className="flex items-center gap-2">
+                  <motion.input
+                    type="number"
+                    value={shares[u.id] || ''}
+                    onChange={e => {
+                      const val = e.target.value === '' ? 0 : Number(e.target.value);
+                      setShares({ ...shares, [u.id]: val });
+                    }}
+                    whileFocus={{ scale: 1.05 }}
+                    className="border-2 border-blue-600 p-2 w-24 text-right rounded-lg text-gray-100 placeholder-gray-500 bg-gray-800 focus:border-blue-400 focus:outline-none"
+                    placeholder="0"
+                  />
+                  <span className="text-gray-300 font-bold w-6">
+                    {type === 'PERCENTAGE' ? '%' : '₹'}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+
+            {/* Validation Messages */}
+            <motion.div
+              layout
+              className={`mt-3 p-4 rounded-lg border-2 transition-all duration-300 font-bold text-center text-sm ${
+                remaining === 0
+                  ? 'bg-gray-800 border-green-500 text-green-400'
+                  : remaining < 0
+                  ? 'bg-gray-800 border-red-500 text-red-400 animate-pulse'
+                  : 'bg-gray-800 border-yellow-500 text-yellow-400'
+              }`}
+            >
+              {remaining === 0 && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  Perfect! Total matches 100% exactly
+                </motion.span>
+              )}
+
+              {remaining > 0 && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  Add {Math.abs(remaining).toFixed(2)}{type === 'PERCENTAGE' ? '%' : '₹'} more
+                </motion.span>
+              )}
+
+              {remaining < 0 && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  You are {Math.abs(remaining).toFixed(2)}{type === 'PERCENTAGE' ? '%' : '₹'} over!
+                </motion.span>
+              )}
+            </motion.div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* Case 2: Under 100% (Incomplete) */}
-        {remaining > 0 && (
-          <span>
-            {type === 'PERCENTAGE' 
-              ? `Incomplete: Add ${remaining.toFixed(2)}% more to make it full 100% ⏳` 
-              : `Incomplete: ₹${remaining.toFixed(2)} remaining to reach the total amount.`
-            }
-          </span>
+      {/* Submit Button */}
+      <motion.button
+        type="submit"
+        disabled={type !== 'EQUAL' && Math.abs(remaining) > 0.01 || loading}
+        whileHover={!(type !== 'EQUAL' && Math.abs(remaining) > 0.01 || loading) ? { scale: 1.05 } : {}}
+        whileTap={!(type !== 'EQUAL' && Math.abs(remaining) > 0.01 || loading) ? { scale: 0.95 } : {}}
+        className={`w-full font-black p-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-lg ${
+          type !== 'EQUAL' && Math.abs(remaining) > 0.01
+            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+            : loading
+            ? 'bg-blue-600 text-white cursor-wait'
+            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg'
+        }`}
+      >
+        {loading ? (
+          <>
+            <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
+              ⏳
+            </motion.span>
+            Saving...
+          </>
+        ) : (
+          <>
+            Save Expense
+          </>
         )}
-
-        {/* Case 3: Over 100% (Overflow) */}
-        {remaining < 0 && (
-          <span>
-            ⚠️ Error: You are {Math.abs(remaining).toFixed(2)}{type === 'PERCENTAGE' ? '%' : '₹'} over the limit!
-          </span>
-        )}
-      </p>
-    </div>
-  </div>
-)}
-
-      {type === 'EXACT' && (
-      <div className={`p-2 rounded ${remaining === 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-        <p className="text-sm font-bold">
-          {remaining === 0 
-            ? "Balances Match! ✅" 
-            : `Remaining to assign: ₹${remaining.toFixed(2)} ❌`}
-        </p>
-      </div>
-    )}
-
-      <button 
-  // The button is disabled if the split isn't EQUAL AND the remaining balance isn't zero
-  disabled={type !== 'EQUAL' && Math.abs(remaining) > 0.01} 
-  type="submit" 
-  className={`w-full font-bold p-3 rounded transition-all duration-200 ${
-    (type !== 'EQUAL' && Math.abs(remaining) > 0.01) 
-      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' // Disabled style
-      : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-md' // Active style
-  }`}
->
-  {type !== 'EQUAL' && remaining > 0 
-    ? `Finish Splitting (${type === 'PERCENTAGE' ? remaining.toFixed(0) + '%' : '₹' + remaining.toFixed(2)} left)` 
-    : 'Save Expense'}
-</button>
-
-    </form>
-    
+      </motion.button>
+    </motion.form>
   );
 }

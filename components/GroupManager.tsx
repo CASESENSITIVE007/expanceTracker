@@ -1,18 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { createGroup, joinGroup, leaveGroup } from '../app/group-actions';
+import { createGroup, joinGroupByCode, leaveGroup } from '../app/group-actions';
 
-export default function GroupManager({ userId, userGroups, allGroups }: any) {
+export default function GroupManager({ userId, userGroups }: any) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [groupName, setGroupName] = useState('');
-  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const userGroupIds = userGroups.map((gm: any) => gm.groupId);
-  const availableGroups = allGroups.filter((g: any) => !userGroupIds.includes(g.id));
+  const [createdGroupCode, setCreatedGroupCode] = useState('');
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,9 +18,18 @@ export default function GroupManager({ userId, userGroups, allGroups }: any) {
     setLoading(true);
 
     try {
-      await createGroup({ name: groupName, createdById: userId });
-      setGroupName('');
-      setShowCreateForm(false);
+      const result = await createGroup({ name: groupName, createdById: userId });
+      if (result.success) {
+        setGroupName('');
+        setShowCreateForm(false);
+        if (result.joinCode) {
+          setCreatedGroupCode(result.joinCode);
+          // Show code for 3 seconds then hide
+          setTimeout(() => setCreatedGroupCode(''), 3000);
+        }
+      } else {
+        setError(result.error || 'Failed to create group');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create group');
     } finally {
@@ -36,9 +43,14 @@ export default function GroupManager({ userId, userGroups, allGroups }: any) {
     setLoading(true);
 
     try {
-      await joinGroup({ groupId: selectedGroupId, userId });
-      setSelectedGroupId('');
-      setShowJoinForm(false);
+      const result = await joinGroupByCode({ joinCode, userId });
+      if (result.success) {
+        setJoinCode('');
+        setShowJoinForm(false);
+        alert(`Successfully joined ${result.groupName}!`);
+      } else {
+        setError(result.error || 'Failed to join group');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join group');
     } finally {
@@ -79,9 +91,28 @@ export default function GroupManager({ userId, userGroups, allGroups }: any) {
                 key={groupMember.groupId}
                 className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg hover:shadow-md transition"
               >
-                <div>
-                  <p className="font-semibold text-gray-800">{groupMember.group.name}</p>
-                  <p className="text-sm text-gray-500">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <p className="font-semibold text-gray-800">{groupMember.group.name}</p>
+                    {groupMember.group.joinCode && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs bg-blue-200 text-blue-700 px-2 py-1 rounded font-mono font-bold">
+                          {groupMember.group.joinCode}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(groupMember.group.joinCode);
+                            alert('Code copied!');
+                          }}
+                          className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-600 px-2 py-1 rounded transition"
+                          title="Copy code"
+                        >
+                          📋
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
                     {groupMember.group.members.length} member{groupMember.group.members.length !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -139,38 +170,53 @@ export default function GroupManager({ userId, userGroups, allGroups }: any) {
               </div>
             </form>
           )}
+          
+          {/* Show created group code */}
+          {createdGroupCode && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">Share this code with friends to join:</p>
+              <p className="text-2xl font-bold text-green-600 text-center">{createdGroupCode}</p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(createdGroupCode);
+                  alert('Code copied to clipboard!');
+                }}
+                className="w-full mt-2 text-sm bg-green-100 hover:bg-green-200 text-green-700 py-1 rounded transition"
+              >
+                Copy Code
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Join Group */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Join Existing Group</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Join Group</h3>
           {!showJoinForm ? (
             <button
               onClick={() => setShowJoinForm(true)}
-              disabled={availableGroups.length === 0}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 rounded-lg transition"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
             >
-              {availableGroups.length > 0 ? '+ Join Group' : 'No groups available'}
+              + Join Group
             </button>
           ) : (
             <form onSubmit={handleJoinGroup} className="space-y-3">
-              <select
-                value={selectedGroupId}
-                onChange={(e) => setSelectedGroupId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <input
+                type="text"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="Enter join code"
+                maxLength={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg font-semibold tracking-widest"
                 required
-              >
-                <option value="">Select a group</option>
-                {availableGroups.map((group: any) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
+              />
+              <p className="text-xs text-gray-500 text-center">
+                Ask group creator for the 6-character code
+              </p>
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  disabled={loading || !selectedGroupId}
+                  disabled={loading || joinCode.length < 6}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 rounded-lg transition"
                 >
                   {loading ? 'Joining...' : 'Join'}

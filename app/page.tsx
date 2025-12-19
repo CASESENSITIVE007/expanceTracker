@@ -22,9 +22,6 @@ export default async function Home({
   // Get user's groups
   const userGroupIds = currentUser.groups.map((gm) => gm.groupId);
   const userGroups = currentUser.groups;
-  const allGroups = await prisma.group.findMany({
-    include: { members: true },
-  });
 
   // Get selected group from URL params or use first group
   const params = await searchParams;
@@ -90,7 +87,7 @@ export default async function Home({
 
       {/* Group Manager */}
       <div className="mb-8">
-        <GroupManager userId={currentUser.id} userGroups={userGroups} allGroups={allGroups} />
+        <GroupManager userId={currentUser.id} userGroups={userGroups} />
       </div>
 
       {/* Group Selector - for switching between groups */}

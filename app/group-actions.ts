@@ -1,13 +1,18 @@
 "use server";
 import prisma from "../lib/prisma";
 import { revalidatePath } from "next/cache";
+import { nanoid } from "nanoid";
 
 export async function createGroup(data: { name: string; createdById: string }) {
   try {
+    // Generate a unique 6-character code for joining
+    const joinCode = nanoid(6).toUpperCase();
+
     const group = await prisma.group.create({
       data: {
         name: data.name,
         createdById: data.createdById,
+        joinCode: joinCode,
         members: {
           create: {
             userId: data.createdById,
@@ -18,39 +23,48 @@ export async function createGroup(data: { name: string; createdById: string }) {
     });
 
     revalidatePath("/");
-    return group;
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : "Failed to create group");
+    return { success: true, group, joinCode };
+  } catch (error: any) {
+    return { success: false, error: error?.message || "Failed to create group" };
   }
 }
 
-export async function joinGroup(data: { groupId: string; userId: string; joinCode?: string }) {
+export async function joinGroupByCode(data: { joinCode: string; userId: string }) {
   try {
+    // Find group by join code
+    const group = await prisma.group.findUnique({
+      where: { joinCode: data.joinCode },
+    });
+
+    if (!group) {
+      return { success: false, error: "Invalid join code. Group not found." };
+    }
+
     // Check if user already in group
     const existing = await prisma.groupMember.findUnique({
       where: {
         groupId_userId: {
-          groupId: data.groupId,
+          groupId: group.id,
           userId: data.userId,
         },
       },
     });
 
     if (existing) {
-      throw new Error("User already in this group");
+      return { success: false, error: "You are already a member of this group" };
     }
 
     const member = await prisma.groupMember.create({
       data: {
-        groupId: data.groupId,
+        groupId: group.id,
         userId: data.userId,
       },
     });
 
     revalidatePath("/");
-    return member;
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : "Failed to join group");
+    return { success: true, member, groupName: group.name };
+  } catch (error: any) {
+    return { success: false, error: error?.message || "Failed to join group" };
   }
 }
 

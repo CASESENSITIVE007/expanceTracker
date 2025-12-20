@@ -56,3 +56,70 @@ export async function clearAllExpenses() {
   }
 }
 
+export async function settleDue(data) {
+  try {
+    const { expenseId, groupId } = data;
+
+    await prisma.expense.update({
+      where: { id: expenseId },
+      data: { isSettled: true },
+    });
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to settle due:", error);
+    throw new Error(error instanceof Error ? error.message : "Could not settle due. Please try again.");
+  }
+}
+
+export async function unsettleDue(data) {
+  try {
+    const { expenseId, groupId } = data;
+
+    await prisma.expense.update({
+      where: { id: expenseId },
+      data: { isSettled: false },
+    });
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to unsettle due:", error);
+    throw new Error(error instanceof Error ? error.message : "Could not unsettle due. Please try again.");
+  }
+}
+
+export async function settleDebt(fromId, toId, amount, groupId) {
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Record a "Settlement" expense
+      const expense = await tx.expense.create({
+        data: {
+          description: "Debt Settlement",
+          amount: amount,
+          paidById: fromId, // The person who owed the money pays
+          groupId: groupId,
+          splitType: "EXACT",
+        },
+      });
+
+      // Create a split where the receiver is the only one "assigned" the value
+      // This effectively moves the balance back to zero
+      await tx.expenseSplit.create({
+        data: {
+          expenseId: expense.id,
+          userId: toId,
+          amount: amount,
+        },
+      });
+    });
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to settle debt:", error);
+    throw new Error(error instanceof Error ? error.message : "Could not settle debt. Please try again.");
+  }
+}
+

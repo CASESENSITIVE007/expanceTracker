@@ -5,6 +5,8 @@ import { logoutUser } from '../app/auth-actions';
 import GroupManager from './GroupManager';
 import GroupSelector from './GroupSelector';
 import AddExpenseForm from './AddExpenseForm';
+import TrackBalances from './TrackBalances';
+import SettleDues from './SettleDues';
 
 export default function PageContent({
   currentUser,
@@ -141,6 +143,20 @@ export default function PageContent({
                   </motion.div>
                 )}
               </motion.div>
+            </div>
+
+            {/* Track Balances and Settle Dues */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <TrackBalances 
+                expenses={activeGroupData?.expenses || []} 
+                groupUsers={groupUsers} 
+                groupId={activeGroupId}
+              />
+              <SettleDues 
+                transactions={transactions} 
+                groupUsers={groupUsers} 
+                groupId={activeGroupId}
+              />
             </div>
           </>
         ) : (

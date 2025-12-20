@@ -56,6 +56,7 @@ model Expense {
   group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId     String
   splits      ExpenseSplit[]
+  isSettled   Boolean  @default(false)
   createdAt   DateTime @default(now())
 }
 

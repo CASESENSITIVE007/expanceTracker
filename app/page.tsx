@@ -50,11 +50,34 @@ export default async function Home({
         where: {
           expense: {
             groupId: activeGroupId,
+            isSettled: false,
           },
         },
         include: { expense: true },
       });
-      transactions = simplifyDebts(splits);
+      
+      // Add expense IDs to transactions for settlement tracking
+      const baseTransactions = simplifyDebts(splits);
+      
+      // Map transactions to include their corresponding expense IDs
+      transactions = baseTransactions.map((t: any) => ({
+        ...t,
+        id: undefined, // Will be populated based on the splits
+      }));
+      
+      // Get all unsettled expenses to attach IDs
+      const unsettledExpenses = await prisma.expense.findMany({
+        where: {
+          groupId: activeGroupId,
+          isSettled: false,
+        },
+      });
+      
+      // Create a mapping of transactions to expense IDs
+      transactions = transactions.map((t: any, idx: number) => ({
+        ...t,
+        id: unsettledExpenses[idx]?.id || String(idx),
+      }));
     }
   }
 

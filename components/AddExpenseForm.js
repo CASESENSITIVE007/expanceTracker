@@ -114,10 +114,26 @@ export default function AddExpenseForm({ users, groupId }) {
           value={amount || ''}
           onChange={e => setAmount(Number(e.target.value))}
           whileFocus={{ scale: 1.02 }}
-          className="w-full border-2 border-blue-600 p-3 rounded-lg text-gray-100 placeholder-gray-400 bg-gray-800 focus:border-blue-400 focus:outline-none transition-all"
+          className={`w-full border-2 p-3 rounded-lg text-gray-100 placeholder-gray-400 bg-gray-800 focus:outline-none transition-all ${
+            amount < 0 ? 'border-red-500 focus:border-red-400' : 'border-blue-600 focus:border-blue-400'
+          }`}
           required
         />
       </motion.div>
+
+      {/* Negative Amount Warning */}
+      <AnimatePresence>
+        {amount < 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 bg-red-100 border-2 border-red-300 text-red-700 rounded-lg font-bold text-center"
+          >
+            Negative numbers are not valid. Please enter a positive amount.
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Paid By Selection */}
       <motion.div
@@ -248,11 +264,11 @@ export default function AddExpenseForm({ users, groupId }) {
       {/* Submit Button */}
       <motion.button
         type="submit"
-        disabled={type !== 'EQUAL' && Math.abs(remaining) > 0.01 || loading}
-        whileHover={!(type !== 'EQUAL' && Math.abs(remaining) > 0.01 || loading) ? { scale: 1.05 } : {}}
-        whileTap={!(type !== 'EQUAL' && Math.abs(remaining) > 0.01 || loading) ? { scale: 0.95 } : {}}
+        disabled={amount < 0 || (type !== 'EQUAL' && Math.abs(remaining) > 0.01) || loading}
+        whileHover={!(amount < 0 || (type !== 'EQUAL' && Math.abs(remaining) > 0.01) || loading) ? { scale: 1.05 } : {}}
+        whileTap={!(amount < 0 || (type !== 'EQUAL' && Math.abs(remaining) > 0.01) || loading) ? { scale: 0.95 } : {}}
         className={`w-full font-black p-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-lg ${
-          type !== 'EQUAL' && Math.abs(remaining) > 0.01
+          amount < 0 || (type !== 'EQUAL' && Math.abs(remaining) > 0.01)
             ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
             : loading
             ? 'bg-blue-600 text-white cursor-wait'

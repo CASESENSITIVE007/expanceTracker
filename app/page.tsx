@@ -29,7 +29,7 @@ export default async function Home({
   const selectedGroupId = params.group as string | undefined;
   const activeGroupId = selectedGroupId && userGroupIds.includes(selectedGroupId) 
     ? selectedGroupId 
-    : userGroupIds[0];
+    : "";
 
   let activeGroupData = null;
   let transactions: any[] = [];

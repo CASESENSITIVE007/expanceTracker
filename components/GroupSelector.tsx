@@ -32,7 +32,7 @@ export default function GroupSelector({ userGroups, activeGroupId }: any) {
       <h3 className="text-xl font-bold mb-4 text-purple-400">Switch Group</h3>
       <div className="relative flex-1 flex flex-col justify-center">
         <motion.select
-          value={activeGroupId || ''}
+          value={activeGroupId }
           onChange={handleGroupChange}
           disabled={isPending}
           whileFocus={{ scale: 1.02 }}

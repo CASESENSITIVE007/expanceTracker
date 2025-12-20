@@ -36,20 +36,19 @@ export default function SettleDues({
     return map;
   }, [groupUsers]);
 
-  const handleSettleDebt = async (transactionId: string) => {
-    const transaction = transactions.find((t) => t.id === transactionId);
-    if (!transaction) return;
-    
+  const handleSettleDebt = async (transaction: Transaction) => {
+    const tKey = getTKey(transaction);
+
     setLoading(true);
     try {
+      // Pass the actual values directly from the transaction object
       await settleDebt(transaction.from, transaction.to, transaction.amount, groupId);
 
-      // Optimistically update UI
-      setSettledIds(prev => new Set([...prev, transactionId]));
+      // Optimistically update UI using the generated key
+      setSettledIds((prev) => new Set([...prev, tKey]));
       setShowConfirm(null);
     } catch (error) {
-      console.error('Failed to settle debt:', error);
-      alert('Failed to settle debt. Please try again.');
+      alert('Failed to settle debt.');
     } finally {
       setLoading(false);
     }
@@ -59,8 +58,10 @@ export default function SettleDues({
     return userMap[userId] || 'Unknown';
   };
 
+  const getTKey = (t: Transaction) => `${t.from}-${t.to}`;
+
   const pendingTransactions = transactions.filter(
-    (t) => !settledIds.has(t.id || '')
+    (t) => t.amount > 0 && !settledIds.has(getTKey(t))
   );
 
   return (
@@ -68,9 +69,9 @@ export default function SettleDues({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.6 }}
-      className="bg-gray-900 p-6 rounded-2xl shadow-xl border-2 border-green-500"
+      className="bg-black p-6 rounded-2xl shadow-xl border-2 border-gray-700"
     >
-      <h2 className="text-2xl font-black text-green-400 mb-6">🤝 Settle Dues</h2>
+      <h2 className="text-2xl font-black text-white mb-6">🤝 Settle Dues</h2>
 
       {pendingTransactions.length === 0 ? (
         <motion.div
@@ -78,8 +79,8 @@ export default function SettleDues({
           animate={{ opacity: 1, scale: 1 }}
           className="text-center py-8"
         >
-          <p className="text-green-400 font-bold text-lg">All settled!</p>
-          <p className="text-green-400 text-sm mt-2">
+          <p className="text-gray-300 font-bold text-lg">All settled!</p>
+          <p className="text-gray-400 text-sm mt-2">
             Everyone is even - no dues remaining
           </p>
         </motion.div>
@@ -96,12 +97,14 @@ export default function SettleDues({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-green-50 dark:bg-gray-800 rounded-lg dark:border-2 dark:border-green-500"
+                  className="flex items-center justify-between"
                 >
-                  <p className="text-sm text-gray-700 dark:text-gray-200">
-                    Record <strong className="text-blue-600 dark:text-blue-400">{getUserName(transaction.from)}</strong> paying{' '}
-                    <strong className="text-green-600 dark:text-green-400">{getUserName(transaction.to)}</strong>
-                  </p>
+                  <div className="p-4 bg-gray-800 rounded-xl border-l-4 border-gray-700 shadow-md hover:shadow-lg transition">
+                    <p className="text-sm text-gray-300">
+                      Record <span className="font-bold text-gray-100">{getUserName(transaction.from)}</span> paying{' '}
+                      <span className="font-bold text-gray-100">{getUserName(transaction.to)}</span>
+                    </p>
+                  </div>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -136,7 +139,7 @@ export default function SettleDues({
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => handleSettleDebt(transactionId)}
+                              onClick={() => handleSettleDebt(transaction)}
                               disabled={loading}
                               className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded font-bold transition-all"
                             >

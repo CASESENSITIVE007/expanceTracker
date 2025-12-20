@@ -20,7 +20,7 @@ export default function PageContent({
     await logoutUser();
   };
   return (
-    <main className="min-h-screen bg-gray-950 p-4 md:p-8">
+    <main className="min-h-screen bg-black p-4 md:p-8">
       {/* Header */}
       <div className="max-w-7xl mx-auto">
         <motion.div
@@ -33,7 +33,7 @@ export default function PageContent({
             <h1 className="text-5xl md:text-6xl font-black text-white mb-2">
               Expense Tracker
             </h1>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-300 text-lg">
               Welcome, <span className="font-bold text-blue-400">{currentUser.name}</span>!
             </p>
           </div>
@@ -42,10 +42,8 @@ export default function PageContent({
             className="inline"
           >
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-bold transition-all shadow-lg"
               type="submit"
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition-all shadow-lg"
             >
               Logout
             </motion.button>
@@ -69,7 +67,7 @@ export default function PageContent({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="mb-8 p-6 bg-gray-900 rounded-2xl shadow-2xl border-2 border-blue-500"
+              className="mb-8 p-6 bg-gray-800 rounded-2xl shadow-2xl border-2 border-gray-700"
             >
               <h2 className="text-4xl font-black text-white mb-4">{activeGroupData.name}</h2>
               <div className="flex flex-wrap gap-3">
@@ -79,7 +77,7 @@ export default function PageContent({
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.1 }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-bold"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-full text-sm font-bold"
                   >
                     <span className="h-6 w-6 flex items-center justify-center rounded-full bg-white text-blue-600 text-xs font-black">
                       {user.name.charAt(0).toUpperCase()}
@@ -98,7 +96,10 @@ export default function PageContent({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
-                <AddExpenseForm users={groupUsers} groupId={activeGroupId} />
+                <div className="border-2 border-gray-700 p-4 rounded-lg bg-black">
+                  <h2 className="text-xl font-bold text-white">Add New Expense</h2>
+                  <AddExpenseForm users={groupUsers} groupId={activeGroupId} />
+                </div>
               </motion.div>
 
               {/* Simplified Balances */}
@@ -106,9 +107,9 @@ export default function PageContent({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="bg-gray-900 p-6 rounded-2xl shadow-xl border-2 border-green-500"
+                className="border-2 border-gray-700 p-4 rounded-lg bg-black"
               >
-                <h2 className="text-2xl font-black mb-6 text-green-400">Simplified Balances</h2>
+                <h2 className="text-xl font-bold text-white mb-6">Simplified Balances</h2>
                 {transactions.length > 0 ? (
                   <motion.div className="space-y-3">
                     {transactions.map((t: any, i: number) => (

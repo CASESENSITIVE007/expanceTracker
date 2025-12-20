@@ -89,12 +89,9 @@ export default function TrackBalances({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.5 }}
-      className="bg-gray-900 p-6 rounded-2xl shadow-xl border-2 border-purple-500"
+      className="bg-black p-6 rounded-2xl shadow-xl border-2 border-gray-700"
     >
-      <h2 className="text-2xl font-black mb-6 text-purple-400">Track Balances</h2>
+      <h2 className="text-2xl font-black mb-6 text-white">Track Balances</h2>
 
       {expenses.length === 0 ? (
         <motion.div
@@ -102,8 +99,8 @@ export default function TrackBalances({
           animate={{ opacity: 1, scale: 1 }}
           className="text-center py-8"
         >
-          <p className="text-purple-400 font-bold text-lg">No expenses yet</p>
-          <p className="text-purple-400 text-sm mt-2">
+          <p className="text-gray-300 font-bold text-lg">No expenses yet</p>
+          <p className="text-gray-300 text-sm mt-2">
             Add expenses to see balance details
           </p>
         </motion.div>
@@ -120,7 +117,7 @@ export default function TrackBalances({
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="p-4 bg-gray-800 rounded-xl border-l-4 border-green-500 shadow-md hover:shadow-lg transition"
+                    className="p-4 bg-gray-800 rounded-xl border-l-4 border-gray-700 shadow-md hover:shadow-lg transition"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className="font-bold text-gray-100">

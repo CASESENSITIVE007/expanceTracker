@@ -23,7 +23,7 @@ export default function GroupManager({ userId, userGroups, activeGroupId }: any)
     try {
       const result = await createGroup({ name: groupName, createdById: userId });
       if (result.success) {
-        setGroupName('');
+        setGroupName(''); 
         setShowCreateForm(false);
         if (result.joinCode) {
           setCreatedGroupCode(result.joinCode);
